@@ -114,16 +114,13 @@ package Avionics "Library of Avionics models"
       replaceable parameter SI.MomentOfInertia J[3,3] "Inertia matrix with respect of body-fixed frame";
       replaceable parameter SI.Acceleration g = Modelica.Constants.g_n;
     end se3Body;
-    partial model SE3Dynamics_v1
+    model SE3Dynamics_v1
       import SI = Modelica.SIunits;
       import Constants = Modelica.Constants;
       extends GenericDynamics;
       constant Real e3[3,1] = [0;0;1];
-      SI.Force f;
-      SI.MomentOfForce M[3,1];
-      SI.Angle R[3,3] "Start Angular Matrix";
       //
-      annotation(experiment(StartTime = 0.0, StopTime = 50.0, Tolerance = 0.000001), Diagram(), Icon(graphics = {Text(rotation = 0, lineColor = {0,0,255}, fillColor = {0,0,0}, pattern = LinePattern.Solid, fillPattern = FillPattern.None, lineThickness = 0.25, extent = {{-34.4954,23.8532},{34.8623,-15.0459}}, textString = "Dynamics T. Lee", fontSize = 16, fontName = "Times New Roman", textStyle = {TextStyle.Bold})}));
+      annotation(Diagram(), Icon(graphics = {Text(rotation = 0, lineColor = {0,0,255}, fillColor = {0,0,0}, pattern = LinePattern.Solid, fillPattern = FillPattern.None, lineThickness = 0.25, extent = {{-34.4954,23.8532},{34.8623,-15.0459}}, textString = "Dynamics T. Lee", fontSize = 16, fontName = "Times New Roman", textStyle = {TextStyle.Bold})}));
       annotation(Icon(graphics = {Text(rotation = 0, lineColor = {0,0,255}, fillColor = {0,0,0}, pattern = LinePattern.Solid, fillPattern = FillPattern.None, lineThickness = 0.25, extent = {{-38.5321,61.2844},{33.0275,-33.3945}}, textString = "Dynamics T. Lee", fontSize = 16, fontName = "Times New Roman", textStyle = {TextStyle.Bold})}));
       //
       parameter String name = "GTC SE(3) model";
@@ -135,9 +132,14 @@ package Avionics "Library of Avionics models"
       // 4.34
       parameter SI.MomentOfInertia J[3,3] = diagonal({0.082,0.0845,0.1377}) "Inertia matrix with respect of body-fixed frame";
       parameter SI.Acceleration g = Modelica.Constants.g_n;
+      //
       input Avionics.Interfaces.se3CommandLaws Laws annotation(Placement(visible = true, transformation(origin = {-99.55,3.77064}, extent = {{-12,-12},{12,12}}, rotation = 0), iconTransformation(origin = {-99.55,3.77064}, extent = {{-12,-12},{12,12}}, rotation = 0)));
       output Avionics.Interfaces.se3TrackConnector TV annotation(Placement(visible = true, transformation(origin = {100.55,1.83487}, extent = {{-12,-12},{12,12}}, rotation = 0), iconTransformation(origin = {100.55,1.83487}, extent = {{-12,-12},{12,12}}, rotation = 0)));
       //  input Avionics.Interfaces.se3QuadrotorParamsConnector P "quadrotor Parameter" annotation(Placement(visible = true, transformation(origin = {-11.7431,96.1468}, extent = {{-12,12},{12,-12}}, rotation = -90), iconTransformation(origin = {-11.7431,96.1468}, extent = {{12,-12},{-12,12}}, rotation = 90)));
+    protected
+      SI.Force f;
+      SI.MomentOfForce M[3,1];
+      SI.Angle R[3,3] "Start Angular Matrix";
     initial equation
       R = Avionics.Functions.Rxyz(n_start[1,1], n_start[2,1], n_start[3,1]);
       Omega = Omega_start;
@@ -305,7 +307,11 @@ package Avionics "Library of Avionics models"
       res:=R * V;
     end M3MultV3_v3;
     model dynamics_v1
-      Avionics.Sources.CommandLaws commandlaws1(M = {0,20,0}) annotation(Placement(visible = true, transformation(origin = {-49.789,50.0703}, extent = {{-12,-12},{12,12}}, rotation = 0)));
+      Avionics.Sources.CommandLaws commandlaws1(f = 40.0) annotation(Placement(visible = true, transformation(origin = {-16.1605,52.5697}, extent = {{-12,-12},{12,12}}, rotation = 0)));
+      Avionics.Bodies.SE3Dynamics_v1 se3dynamics_v11 annotation(Placement(visible = true, transformation(origin = {12.1097,51.9142}, extent = {{-12,-12},{12,12}}, rotation = 0)));
+      annotation(experiment(StartTime = 0.0, StopTime = 50.0, Tolerance = 0.000001), Diagram(), Icon(graphics = {Text(rotation = 0, lineColor = {0,0,255}, fillColor = {0,0,0}, pattern = LinePattern.Solid, fillPattern = FillPattern.None, lineThickness = 0.25, extent = {{-34.4954,23.8532},{34.8623,-15.0459}}, textString = "Dynamics", fontSize = 16, fontName = "Times New Roman", textStyle = {TextStyle.Bold})}));
+    equation
+      connect(commandlaws1.Laws,se3dynamics_v11.Laws);
     end dynamics_v1;
   end Test;
   package Controller "Interface definitions for the Hydraulics library"
