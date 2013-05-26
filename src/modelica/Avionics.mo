@@ -114,57 +114,48 @@ package Avionics "Library of Avionics models"
       replaceable parameter SI.MomentOfInertia J[3,3] "Inertia matrix with respect of body-fixed frame";
       replaceable parameter SI.Acceleration g = Modelica.Constants.g_n;
     end se3Body;
-    model SE3Dynamics_v1
+    partial model SE3Dynamics_v1
       import SI = Modelica.SIunits;
       import Constants = Modelica.Constants;
-      //  extends partialModel(m = m_param, g = g_param, J = J_param, x(start = x_start), v(start = v_start, fixed = true), Omega(start = Omega_start));
-      //extends partialModel;
       extends GenericDynamics;
-      //extends Avionics.Bodies.se3Body;
-      //(x(start = x_start), v(start = v_start, fixed = true), Omega(start = Omega_start));
       constant Real e3[3,1] = [0;0;1];
       SI.Force f;
-      //(start=f_start);
       SI.MomentOfForce M[3,1];
-      //(start=M_start);
-      SI.Angle R[3,3](start = Avionics.Functions.Rxyz(n_start[1,1], n_start[2,1], n_start[3,1]));
-      // "Start Angular Matrix"
+      SI.Angle R[3,3] "Start Angular Matrix";
+      //
       annotation(experiment(StartTime = 0.0, StopTime = 50.0, Tolerance = 0.000001), Diagram(), Icon(graphics = {Text(rotation = 0, lineColor = {0,0,255}, fillColor = {0,0,0}, pattern = LinePattern.Solid, fillPattern = FillPattern.None, lineThickness = 0.25, extent = {{-34.4954,23.8532},{34.8623,-15.0459}}, textString = "Dynamics T. Lee", fontSize = 16, fontName = "Times New Roman", textStyle = {TextStyle.Bold})}));
       annotation(Icon(graphics = {Text(rotation = 0, lineColor = {0,0,255}, fillColor = {0,0,0}, pattern = LinePattern.Solid, fillPattern = FillPattern.None, lineThickness = 0.25, extent = {{-38.5321,61.2844},{33.0275,-33.3945}}, textString = "Dynamics T. Lee", fontSize = 16, fontName = "Times New Roman", textStyle = {TextStyle.Bold})}));
       //
       parameter String name = "GTC SE(3) model";
       parameter SI.Position x_start[3,1] = [0;0;0] "Start Positions";
       parameter SI.Velocity v_start[3,1] = [0;0;0] "Start Velocityies";
-      //  SI.Angle R_start[3,3] =
       parameter SI.Angle n_start[3,1] = [0;0;0] "Start Angles";
       parameter SI.AngularVelocity Omega_start[3,1] = [0;0;0] "Start Angular Velocity";
-      parameter SI.Mass m_param = 8.34;
+      parameter SI.Mass m = 8.34;
       // 4.34
-      parameter SI.MomentOfInertia J_param[3,3] = diagonal({0.082,0.0845,0.1377}) "Inertia matrix with respect of body-fixed frame";
-      parameter SI.Acceleration g_param = Modelica.Constants.g_n;
-      //  parameter SI.Force f_start = 0 "initial force";
-      //  parameter SI.MomentOfForce M_start[3,1]  =[0;0;0] "initial moments";
-      input Avionics.Interfaces.CommandLaws Laws annotation(Placement(visible = true, transformation(origin = {-99.55,3.77064}, extent = {{-12,-12},{12,12}}, rotation = 0), iconTransformation(origin = {-99.55,3.77064}, extent = {{-12,-12},{12,12}}, rotation = 0)));
+      parameter SI.MomentOfInertia J[3,3] = diagonal({0.082,0.0845,0.1377}) "Inertia matrix with respect of body-fixed frame";
+      parameter SI.Acceleration g = Modelica.Constants.g_n;
+      input Avionics.Interfaces.se3CommandLaws Laws annotation(Placement(visible = true, transformation(origin = {-99.55,3.77064}, extent = {{-12,-12},{12,12}}, rotation = 0), iconTransformation(origin = {-99.55,3.77064}, extent = {{-12,-12},{12,12}}, rotation = 0)));
       output Avionics.Interfaces.se3TrackConnector TV annotation(Placement(visible = true, transformation(origin = {100.55,1.83487}, extent = {{-12,-12},{12,12}}, rotation = 0), iconTransformation(origin = {100.55,1.83487}, extent = {{-12,-12},{12,12}}, rotation = 0)));
-      input Avionics.Interfaces.se3QuadrotorParamsConnector P "quadrotor Parameter" annotation(Placement(visible = true, transformation(origin = {-11.7431,96.1468}, extent = {{-12,12},{12,-12}}, rotation = -90), iconTransformation(origin = {-11.7431,96.1468}, extent = {{12,-12},{-12,12}}, rotation = 90)));
+      //  input Avionics.Interfaces.se3QuadrotorParamsConnector P "quadrotor Parameter" annotation(Placement(visible = true, transformation(origin = {-11.7431,96.1468}, extent = {{-12,12},{12,-12}}, rotation = -90), iconTransformation(origin = {-11.7431,96.1468}, extent = {{12,-12},{-12,12}}, rotation = 90)));
+    initial equation
+      R = Avionics.Functions.Rxyz(n_start[1,1], n_start[2,1], n_start[3,1]);
+      Omega = Omega_start;
+      x = x_start;
+      v = v_start;
     equation
-      //  m = P.m;
-      //  g = P.g;
-      //  J = P.J;
-      //
       f = Laws.f;
       vector(M) = Laws.M;
-      //
       // LINEAR
-      P.m * a = P.m * P.g * e3 - f * R * e3;
+      m * a = m * g * e3 - f * R * e3;
       a = der(v);
       v = der(x);
       // ANGULAR
-      vector(P.J * dOmega) + cross(vector(Omega), vector(P.J * Omega)) = M[:,1];
+      vector(J * dOmega) + cross(vector(Omega), vector(J * Omega)) = M[:,1];
       dOmega = der(Omega);
       R * skew(Omega[:,1]) = der(R);
       //der(R) = R * skew(Omega); // original
-      // Ajout
+      // Add
       n = Avionics.Functions.vex(R);
       TV.x = x;
       TV.v = v;
@@ -313,6 +304,9 @@ package Avionics "Library of Avionics models"
     algorithm
       res:=R * V;
     end M3MultV3_v3;
+    model dynamics_v1
+      Avionics.Sources.CommandLaws commandlaws1(M = {0,20,0}) annotation(Placement(visible = true, transformation(origin = {-49.789,50.0703}, extent = {{-12,-12},{12,12}}, rotation = 0)));
+    end dynamics_v1;
   end Test;
   package Controller "Interface definitions for the Hydraulics library"
     extends Modelica.Icons.InterfacesPackage;
@@ -501,7 +495,17 @@ end
       Laws.M = vector(temp_M);
     end se3Controller;
     model se3QuadrotorParameters
-      //  extends Avionics.Types.se3QuadrotorParameters;
+      //  parameter Avionics.Types.se3QuadrotorParameters;
+      import SI = Modelica.SIunits;
+      parameter SI.MomentOfInertia J[3,3] = diagonal({0.082,0.0845,0.1377}) "Inertia matrix with respect of body-fixed frame";
+      parameter SI.Mass m = 8.34 "Mass";
+      //
+      parameter SI.Distance d = 0.315 "arm lenght";
+      //
+      parameter SI.Distance c_t_f = 0.0008004 "Coefficient of Thrust Force";
+      //;
+      //
+      parameter SI.Acceleration g = Modelica.Constants.g_n "gravity";
       //  import SI = Modelica.SIunits;
       annotation(Diagram(), Icon(graphics = {Text(rotation = 0, lineColor = {0,0,255}, fillColor = {0,0,0}, pattern = LinePattern.Solid, fillPattern = FillPattern.None, lineThickness = 0.25, extent = {{-59.4495,-49.1743},{62.3853,48.4404}}, textString = "Parameters", textStyle = {TextStyle.Bold})}));
       output Avionics.Interfaces.se3QuadrotorParamsConnector P annotation(Placement(visible = true, transformation(origin = {99.4495,-2.93578}, extent = {{-12,-12},{12,12}}, rotation = 0), iconTransformation(origin = {99.4495,-2.93578}, extent = {{-12,-12},{12,12}}, rotation = 0)));
@@ -577,6 +581,16 @@ equation
       signal[3] = offset + (if time < startTime then 0 else amplitude[3] * Modelica.Math.cos(pi * (time - startTime) + phase));
       //  signal = {x,y,z};
     end TrajectoryPosition1;
+    model CommandLaws
+      import SI = Modelica.SIunits;
+      parameter SI.Force f = 1.0 "thrust";
+      parameter SI.MomentOfForce M[3] = {0,0,0} "Moments";
+      annotation(Diagram(), Icon(graphics = {Text(rotation = 0, lineColor = {0,0,255}, fillColor = {0,0,0}, pattern = LinePattern.Solid, fillPattern = FillPattern.None, lineThickness = 0.25, extent = {{-59.4495,-49.1743},{62.3853,48.4404}}, textString = "Commmand Laws", textStyle = {TextStyle.Bold})}));
+      output Avionics.Interfaces.se3CommandLaws Laws annotation(Placement(visible = true, transformation(origin = {99.4495,-2.93578}, extent = {{-12,-12},{12,12}}, rotation = 0), iconTransformation(origin = {99.4495,-2.93578}, extent = {{-12,-12},{12,12}}, rotation = 0)));
+    equation
+      Laws.f = f;
+      Laws.M = M;
+    end CommandLaws;
   end Sources;
   package Types "Interface definitions for the Hydraulics library"
     extends Modelica.Icons.InterfacesPackage;
@@ -609,42 +623,44 @@ equation
     record se3QuadrotorParameters "Quadrotor Parameters"
       // IV. Numerical Example
       import SI = Modelica.SIunits;
-      SI.MomentOfInertia J[3,3];
-      //= diagonal({0.082,0.0845,0.1377}) "Inertia matrix with respect of body-fixed frame";
+      SI.MomentOfInertia J[3,3] "Inertia matrix with respect of body-fixed frame";
       SI.Mass m "Mass";
-      //= 8.34;
       SI.Distance d "arm lenght";
-      //= 0.315;
       SI.Distance c_t_f "Coefficient of Thrust Force";
-      // = 0.0008004;
-      //
       SI.Acceleration g;
-      // = Modelica.Constants.g_n;
     end se3QuadrotorParameters;
+    record se3CommandLaws "Command Laws"
+      import SI = Modelica.SIunits;
+      // flow
+      SI.Force f;
+      SI.MomentOfForce M[3];
+    end se3CommandLaws;
   end Types;
   package Interfaces "Interface definitions for the Hydraulics library"
     extends Modelica.Icons.InterfacesPackage;
     import SI = Modelica.SIunits;
-    connector XXX
-      Real PotentialVariable;
-      flow Real FlowVariable;
-    end XXX;
-    connector Frame2 "Connector for aerodynamic and mechanical purposes"
-      import SI = Modelica.SIunits;
-      SI.Pressure p "Static pressure";
-      SI.Density rho "Atmosphere density";
-      SI.Temperature T "Static temperature";
-      //Types.TransferMatrix Tmat "Transfer matrix from local to inertial system";
-      SI.Position r[3] "Position of frame relative inertial frame";
-      SI.AngularVelocity w[3] "Angular velocity";
-      SI.Velocity v[3] "Translational velocity in earth frame";
-      SI.Acceleration g[3] "Gravitational acceleration";
-      flow SI.Force[3] F "Force";
-      flow SI.Torque[3] M "Torque";
-      flow SI.Mass m "Mass";
-      //flow Real[3] md(unit="kg.m") "Product mass*position (m*d) for calc CoG";
-      flow SI.MomentOfInertia[3,3] I "Mass moment of inertia";
-    end Frame2;
+    /*  connector XXX
+    Real PotentialVariable;
+    flow Real FlowVariable;
+  end XXX;
+
+  connector Frame2 "Connector for aerodynamic and mechanical purposes"
+    import SI = Modelica.SIunits;
+    SI.Pressure p "Static pressure";
+    SI.Density rho "Atmosphere density";
+    SI.Temperature T "Static temperature";
+    //Types.TransferMatrix Tmat "Transfer matrix from local to inertial system";
+    SI.Position r[3] "Position of frame relative inertial frame";
+    SI.AngularVelocity w[3] "Angular velocity";
+    SI.Velocity v[3] "Translational velocity in earth frame";
+    SI.Acceleration g[3] "Gravitational acceleration";
+    flow SI.Force[3] F "Force";
+    flow SI.Torque[3] M "Torque";
+    flow SI.Mass m "Mass";
+    //flow Real[3] md(unit="kg.m") "Product mass*position (m*d) for calc CoG";
+    flow SI.MomentOfInertia[3,3] I "Mass moment of inertia";
+  end Frame2;
+*/
     connector se3TrackConnector
       /* //extends Frame;
   import SI = Modelica.SIunits;
@@ -674,8 +690,8 @@ connector se3PositionConnector
 end se3PositionConnector;
 */
     //connector bla = input SI.Angle[3]  ;
-    connector se3AttitudeConnectorOut = input SI.Angle[3];
-    connector se3PositionConnectorOut = input SI.Position[3];
+    //  connector se3AttitudeConnectorOut = input SI.Angle[3];
+    //  connector se3PositionConnectorOut = input SI.Position[3];
     connector se3QuadrotorParamsConnector
       extends Avionics.Types.se3QuadrotorParameters;
       annotation(defaultComponentName = "Tracking Variable", Icon(coordinateSystem(preserveAspectRatio = true, extent = {{-100,-100},{100,100}}, grid = {1,1}, initialScale = 0.16), graphics = {Rectangle(extent = {{-10,10},{10,-10}}, lineColor = {95,95,95}, lineThickness = 0.5),Rectangle(extent = {{-30,100},{30,-100}}, lineColor = {0,0,0}, fillColor = {192,192,192}, fillPattern = FillPattern.Solid)}), Diagram(coordinateSystem(preserveAspectRatio = true, extent = {{-100,-100},{100,100}}, grid = {1,1}, initialScale = 0.16), graphics = {Text(extent = {{-140,-50},{140,-88}}, lineColor = {0,0,0}, textString = "%name"),Rectangle(extent = {{-12,40},{12,-40}}, lineColor = {0,0,0}, fillColor = {192,192,192}, fillPattern = FillPattern.Solid)}));
@@ -700,14 +716,6 @@ Block has one continuous Real output signal vector.
       Modelica.SIunits.Position x[3];
       annotation(defaultComponentName = "Tracking Variable", Icon(coordinateSystem(preserveAspectRatio = true, extent = {{-100,-100},{100,100}}, grid = {1,1}, initialScale = 0.16), graphics = {Rectangle(extent = {{-10,10},{10,-10}}, lineColor = {95,95,95}, lineThickness = 0.5),Rectangle(extent = {{-30,100},{30,-100}}, lineColor = {0,0,0}, fillColor = {192,192,192}, fillPattern = FillPattern.Solid)}), Diagram(coordinateSystem(preserveAspectRatio = true, extent = {{-100,-100},{100,100}}, grid = {1,1}, initialScale = 0.16), graphics = {Text(extent = {{-140,-50},{140,-88}}, lineColor = {0,0,0}, textString = "%name"),Rectangle(extent = {{-12,40},{12,-40}}, lineColor = {0,0,0}, fillColor = {192,192,192}, fillPattern = FillPattern.Solid)}));
     end se3PositionConnector;
-    connector CommandLaws
-      import SI = Modelica.SIunits;
-      // flow
-      SI.Force f;
-      SI.MomentOfForce M[3];
-      annotation(defaultComponentName = "Command Laws (f,M)", Icon(coordinateSystem(preserveAspectRatio = true, extent = {{-100,-100},{100,100}}, grid = {1,1}, initialScale = 0.16), graphics = {Rectangle(extent = {{-10,10},{10,-10}}, lineColor = {95,95,95}, lineThickness = 0.5),Rectangle(extent = {{-30,100},{30,-100}}, lineColor = {0,0,0}, fillColor = {192,192,192}, fillPattern = FillPattern.Solid)}), Diagram(coordinateSystem(preserveAspectRatio = true, extent = {{-100,-100},{100,100}}, grid = {1,1}, initialScale = 0.16), graphics = {Text(extent = {{-140,-50},{140,-88}}, lineColor = {0,0,0}, textString = "%name"),Rectangle(extent = {{-12,40},{12,-40}}, lineColor = {0,0,0}, fillColor = {192,192,192}, fillPattern = FillPattern.Solid)}));
-      //   annotation(Diagram(), Icon());
-    end CommandLaws;
     partial block MI "Multiple Input continuous control block"
       import Interfaces = Modelica.Blocks.Interfaces;
       extends Modelica.Blocks.Icons.Block;
@@ -732,6 +740,11 @@ Block has one continuous Real input signal vector.
       annotation(Diagram(), Icon());
       Interfaces.RealOutput s[nout] "Connector of Real input signals" annotation(Placement(visible = true, transformation(origin = {-90,1.46789}, extent = {{-10,-10},{10,10}}, rotation = 0), iconTransformation(origin = {-90,1.46789}, extent = {{-10,-10},{10,10}}, rotation = 0)));
     end MO3;
+    connector se3CommandLaws
+      extends Avionics.Types.se3CommandLaws;
+      annotation(defaultComponentName = "Command Laws (f,M)", Icon(coordinateSystem(preserveAspectRatio = true, extent = {{-100,-100},{100,100}}, grid = {1,1}, initialScale = 0.16), graphics = {Rectangle(extent = {{-10,10},{10,-10}}, lineColor = {95,95,95}, lineThickness = 0.5),Rectangle(extent = {{-30,100},{30,-100}}, lineColor = {0,0,0}, fillColor = {192,192,192}, fillPattern = FillPattern.Solid)}), Diagram(coordinateSystem(preserveAspectRatio = true, extent = {{-100,-100},{100,100}}, grid = {1,1}, initialScale = 0.16), graphics = {Text(extent = {{-140,-50},{140,-88}}, lineColor = {0,0,0}, textString = "%name"),Rectangle(extent = {{-12,40},{12,-40}}, lineColor = {0,0,0}, fillColor = {192,192,192}, fillPattern = FillPattern.Solid)}));
+      //   annotation(Diagram(), Icon());
+    end se3CommandLaws;
   end Interfaces;
 end Avionics;
 
