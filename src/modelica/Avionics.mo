@@ -59,15 +59,13 @@ package Avionics "Library of Avionics models"
       annotation(experiment(StartTime = 0.0, StopTime = 10.0, Tolerance = 0.000001));
       Avionics.Sources.TrajectoryPosition1 trajectoryposition11 annotation(Placement(visible = true, transformation(origin = {-63.8532,38.8991}, extent = {{-12,-12},{12,12}}, rotation = 0)));
       Avionics.Sources.TrajectoryHeading1 trajectoryheading11 annotation(Placement(visible = true, transformation(origin = {-62.7523,1.10092}, extent = {{-12,-12},{12,12}}, rotation = 0)));
-      Avionics.Controller.se3Controller se3controller1 annotation(Placement(visible = true, transformation(origin = {-11.0092,20.3694}, extent = {{-12,-12},{12,12}}, rotation = 0)));
-      Avionics.Bodies.SE3Dynamics_v1 se3dynamics_v11 annotation(Placement(visible = true, transformation(origin = {33.3945,21.4703}, extent = {{-12,-12},{12,12}}, rotation = 0)));
-      Avionics.Controller.se3QuadrotorParameters se3quadrotorparameters1 annotation(Placement(visible = true, transformation(origin = {-12.3898,47.7571}, extent = {{-12,-12},{12,12}}, rotation = 0)));
+      Avionics.Controller.se3Controller se3controller1(k = Avionics.Controller.se3parameters(m = 8.34)) annotation(Placement(visible = true, transformation(origin = {-11.0092,21.7511}, extent = {{-12,-12},{12,12}}, rotation = 0)));
+      Avionics.Bodies.SE3Dynamics_v1 se3dynamics_v11 annotation(Placement(visible = true, transformation(origin = {33.3945,21.8157}, extent = {{-12,-12},{12,12}}, rotation = 0)));
     equation
       connect(trajectoryposition11.signal,se3controller1.x_d);
       connect(trajectoryheading11.signal,se3controller1.b1_d);
       connect(se3controller1.Laws,se3dynamics_v11.Laws);
       connect(se3dynamics_v11.TV,se3controller1.TV);
-      connect(se3quadrotorparameters1.P,se3controller1.P);
     end GeometricTrackingOnSE3;
   end Examples;
   package Bodies "Interface definitions for the Hydraulics library"
@@ -435,71 +433,6 @@ end
         // SE3Dynamics_v1
       end se3Command;
     end SE3;
-    model se3Controller
-      parameter String name = "GTC SE(3) model";
-      import SI = Modelica.SIunits;
-      import Interfaces = Avionics.Interfaces;
-      // In
-      //  input Avionics.Interfaces.se3AttitudeConnector b1_d "Heading" annotation(Placement(visible = true, transformation(origin = {-99.8165,-42.2018}, extent = {{-12,-12},{12,12}}, rotation = 0), iconTransformation(origin = {-99.8165,-42.2018}, extent = {{-12,-12},{12,12}}, rotation = 0)));
-      //  input Avionics.Interfaces.se3PositionConnector x_d "Position" annotation(Placement(visible = true, transformation(origin = {-99.4495,45.5045}, extent = {{-12,-12},{12,12}}, rotation = 0), iconTransformation(origin = {-99.4495,45.5045}, extent = {{-12,-12},{12,12}}, rotation = 0)));
-      input Modelica.Blocks.Interfaces.RealInput b1_d[3] "Heading" annotation(Placement(visible = true, transformation(origin = {-99.8165,-42.2018}, extent = {{-12,-12},{12,12}}, rotation = 0), iconTransformation(origin = {-99.8165,-42.2018}, extent = {{-12,-12},{12,12}}, rotation = 0)));
-      input Modelica.Blocks.Interfaces.RealInput x_d[3] "Position" annotation(Placement(visible = true, transformation(origin = {-99.4495,45.5045}, extent = {{-12,-12},{12,12}}, rotation = 0), iconTransformation(origin = {-99.4495,45.5045}, extent = {{-12,-12},{12,12}}, rotation = 0)));
-      // input Modelica.Blocks.Interfaces.RealVectorInput x_d[3] "Position" annotation(Placement(visible = true, transformation(origin = {-99.4495,45.5045}, extent = {{-12,-12},{12,12}}, rotation = 0), iconTransformation(origin = {-99.4495,45.5045}, extent = {{-12,-12},{12,12}}, rotation = 0)));
-      // Out
-      output Avionics.Interfaces.CommandLaws Laws annotation(Placement(visible = true, transformation(origin = {100.45,1.93578}, extent = {{-12,-12},{12,12}}, rotation = 0), iconTransformation(origin = {100.45,1.93578}, extent = {{-12,-12},{12,12}}, rotation = 0)));
-      // params
-      parameter se3parameters k;
-      // Constantes
-      Avionics.Types.se3Error e "Error Variable";
-      // 12
-      Avionics.Types.se3TrackingVariable W;
-      // 18
-      annotation(Diagram(), Icon(graphics = {Text(rotation = 0, lineColor = {0,0,255}, fillColor = {0,0,0}, pattern = LinePattern.Solid, fillPattern = FillPattern.None, lineThickness = 0.25, extent = {{-52.844,39.2661},{-82.5688,54.6789}}, textString = "Position", textStyle = {TextStyle.Bold}),Text(rotation = 0, lineColor = {0,0,255}, fillColor = {0,0,0}, pattern = LinePattern.Solid, fillPattern = FillPattern.None, lineThickness = 0.25, extent = {{-52.1101,-45.1376},{-78.5321,-38.5321}}, textString = "Heading"),Text(rotation = 0, lineColor = {0,0,255}, fillColor = {0,0,0}, pattern = LinePattern.Solid, fillPattern = FillPattern.None, lineThickness = 0.25, extent = {{48.8073,7.33945},{89.5413,-6.6055}}, textString = "Control Laws"),Text(rotation = 0, lineColor = {0,0,255}, fillColor = {0,0,0}, pattern = LinePattern.Solid, fillPattern = FillPattern.None, lineThickness = 0.25, extent = {{-19.4495,-85.8715},{28.6238,-79.266}}, textString = "Tracking Variables"),Text(rotation = 0, lineColor = {0,0,255}, fillColor = {0,0,0}, pattern = LinePattern.Solid, fillPattern = FillPattern.None, lineThickness = 0.25, extent = {{-29.7248,83.3028},{8.80734,60.1835}}, textString = "Parameters"),Text(rotation = -180, lineColor = {0,0,255}, fillColor = {0,0,0}, pattern = LinePattern.Solid, fillPattern = FillPattern.None, lineThickness = 0.25, extent = {{62.3853,2.93578},{-63.1193,-39.633}}, textString = "CONTROLLER", textStyle = {TextStyle.Bold})}));
-      //  input Avionics.Interfaces.se3PoseConnector Pose_d "Pose" annotation(Placement(visible = true, transformation(origin = {-99.0826,8.44037}, extent = {{-12,-12},{12,12}}, rotation = 0), iconTransformation(origin = {-99.0826,8.44037}, extent = {{-12,-12},{12,12}}, rotation = 0)));
-      constant Real e3[3,1] = [0.0;0.0;1.0];
-      input Avionics.Interfaces.se3QuadrotorParamsConnector P "quadrotor Parameter" annotation(Placement(visible = true, transformation(origin = {-11.7431,96.1468}, extent = {{-12,12},{12,-12}}, rotation = -90), iconTransformation(origin = {-11.7431,96.1468}, extent = {{12,-12},{-12,12}}, rotation = 90)));
-      input Avionics.Interfaces.se3TrackConnector TV annotation(Placement(visible = true, transformation(origin = {-0.834862,-97.8803}, extent = {{-12,12},{12,-12}}, rotation = -90), iconTransformation(origin = {-0.834862,-97.8803}, extent = {{12,-12},{-12,12}}, rotation = 90)));
-    protected
-      // Vars
-      Real temp_M[3,1];
-      Real temp_M_cross[3,1];
-      SI.Acceleration a[3,1] "Acceleration";
-      SI.Angle b3_d[3] "";
-      //SI.Angle b1_d[3] "";
-      Real track_coeff[3,1];
-    equation
-      // k.m = 0;
-      //  k.m = P.m;
-      // Error
-      e = Avionics.Functions.se3Error(TV, W);
-      a = der(TV.v);
-      //
-      // Tracking Controller
-      track_coeff = -k.x * e.x - k.v * e.v - P.m * P.g * e3 + P.m * a;
-      b3_d = -vector(track_coeff) / Modelica.Math.Vectors.norm(vector(track_coeff));
-      // Linear
-      //  vector(W.x) = Pose_d.x;
-      //vector(W.x) = x_d.x;
-      vector(W.x) = x_d;
-      W.v = der(W.x);
-      //
-      // Angular
-      //		b1_d =
-      // b1_d = Pose_d.n;
-      // R_d : Attitude Tracking
-      //W.R = Avionics.Functions.se3R_d(b1_d.n, b3_d);
-      W.R = Avionics.Functions.se3R_d(b1_d, b3_d);
-      // W.Omega
-      W.Omega = Avionics.Functions.vex(Modelica.Math.Matrices.inv(der(W.R)) * W.R);
-      // Control output
-      // f :
-      Laws.f = scalar(-transpose(track_coeff) * TV.R * e3);
-      // M :
-      vector(temp_M_cross) = cross(vector(TV.Omega), vector(P.J * TV.Omega));
-      //Laws.M
-      temp_M = -k.R * e.R - k.Omega * e.Omega + temp_M_cross - P.J * (skew(vector(TV.Omega)) * transpose(TV.R) * W.R * W.Omega - transpose(TV.R) * W.R * der(W.Omega));
-      Laws.M = vector(temp_M);
-    end se3Controller;
     model se3QuadrotorParameters
       //  parameter Avionics.Types.se3QuadrotorParameters;
       import SI = Modelica.SIunits;
@@ -522,6 +455,101 @@ end
       P.c_t_f = 0.0008004;
       P.g = Modelica.Constants.g_n;
     end se3QuadrotorParameters;
+    model ctrlParameters
+      import SI = Modelica.SIunits;
+      //replaceable
+      /*	parameter SI.Mass m = 1;
+  replaceable Real x = 16 * m;
+  replaceable Real v = 5.6 * m;
+  replaceable Real R = 8.81;
+  replaceable Real Omega = 2.54;
+*/
+      replaceable parameter SI.Mass m = 1;
+      replaceable Real x;
+      // = 16 * m;
+      replaceable Real v;
+      // = 5.6 * m;
+      replaceable Real R;
+      replaceable Real Omega;
+      parameter Real R_param = 8.81;
+      parameter Real Omega_param = 2.54;
+    equation
+      x = 16 * m;
+      v = 5.6 * m;
+      R = R_param;
+      Omega = Omega_param;
+    end ctrlParameters;
+    model se3Controller
+      parameter String name = "GTC SE(3) model";
+      import SI = Modelica.SIunits;
+      import Interfaces = Avionics.Interfaces;
+      // In
+      //  input Avionics.Interfaces.se3AttitudeConnector b1_d "Heading" annotation(Placement(visible = true, transformation(origin = {-99.8165,-42.2018}, extent = {{-12,-12},{12,12}}, rotation = 0), iconTransformation(origin = {-99.8165,-42.2018}, extent = {{-12,-12},{12,12}}, rotation = 0)));
+      //  input Avionics.Interfaces.se3PositionConnector x_d "Position" annotation(Placement(visible = true, transformation(origin = {-99.4495,45.5045}, extent = {{-12,-12},{12,12}}, rotation = 0), iconTransformation(origin = {-99.4495,45.5045}, extent = {{-12,-12},{12,12}}, rotation = 0)));
+      input Modelica.Blocks.Interfaces.RealInput b1_d[3] "Heading" annotation(Placement(visible = true, transformation(origin = {-99.8165,-42.2018}, extent = {{-12,-12},{12,12}}, rotation = 0), iconTransformation(origin = {-99.8165,-42.2018}, extent = {{-12,-12},{12,12}}, rotation = 0)));
+      input Modelica.Blocks.Interfaces.RealInput x_d[3] "Position" annotation(Placement(visible = true, transformation(origin = {-99.4495,45.5045}, extent = {{-12,-12},{12,12}}, rotation = 0), iconTransformation(origin = {-99.4495,45.5045}, extent = {{-12,-12},{12,12}}, rotation = 0)));
+      // input Modelica.Blocks.Interfaces.RealVectorInput x_d[3] "Position" annotation(Placement(visible = true, transformation(origin = {-99.4495,45.5045}, extent = {{-12,-12},{12,12}}, rotation = 0), iconTransformation(origin = {-99.4495,45.5045}, extent = {{-12,-12},{12,12}}, rotation = 0)));
+      // Out
+      output Avionics.Interfaces.se3CommandLaws Laws annotation(Placement(visible = true, transformation(origin = {100.45,1.93578}, extent = {{-12,-12},{12,12}}, rotation = 0), iconTransformation(origin = {100.45,1.93578}, extent = {{-12,-12},{12,12}}, rotation = 0)));
+      // params
+      //  parameter se3parameters k = Avionics.Controller.se3parameters;
+      ctrlParameters k;
+      // Constantes
+      Avionics.Types.se3Error e "Error Variable";
+      // 12
+      Avionics.Types.se3TrackingVariable W;
+      // 18
+      annotation(Diagram(), Icon(graphics = {Text(rotation = 0, lineColor = {0,0,255}, fillColor = {0,0,0}, pattern = LinePattern.Solid, fillPattern = FillPattern.None, lineThickness = 0.25, extent = {{-52.844,39.2661},{-82.5688,54.6789}}, textString = "Position", textStyle = {TextStyle.Bold}),Text(rotation = 0, lineColor = {0,0,255}, fillColor = {0,0,0}, pattern = LinePattern.Solid, fillPattern = FillPattern.None, lineThickness = 0.25, extent = {{-52.1101,-45.1376},{-78.5321,-38.5321}}, textString = "Heading"),Text(rotation = 0, lineColor = {0,0,255}, fillColor = {0,0,0}, pattern = LinePattern.Solid, fillPattern = FillPattern.None, lineThickness = 0.25, extent = {{48.8073,7.33945},{89.5413,-6.6055}}, textString = "Control Laws"),Text(rotation = 0, lineColor = {0,0,255}, fillColor = {0,0,0}, pattern = LinePattern.Solid, fillPattern = FillPattern.None, lineThickness = 0.25, extent = {{-19.4495,-85.8715},{28.6238,-79.266}}, textString = "Tracking Variables"),Text(rotation = 0, lineColor = {0,0,255}, fillColor = {0,0,0}, pattern = LinePattern.Solid, fillPattern = FillPattern.None, lineThickness = 0.25, extent = {{-29.7248,83.3028},{8.80734,60.1835}}, textString = "Parameters"),Text(rotation = -180, lineColor = {0,0,255}, fillColor = {0,0,0}, pattern = LinePattern.Solid, fillPattern = FillPattern.None, lineThickness = 0.25, extent = {{62.3853,2.93578},{-63.1193,-39.633}}, textString = "CONTROLLER", textStyle = {TextStyle.Bold})}));
+      //  input Avionics.Interfaces.se3PoseConnector Pose_d "Pose" annotation(Placement(visible = true, transformation(origin = {-99.0826,8.44037}, extent = {{-12,-12},{12,12}}, rotation = 0), iconTransformation(origin = {-99.0826,8.44037}, extent = {{-12,-12},{12,12}}, rotation = 0)));
+      constant Real e3[3,1] = [0.0;0.0;1.0];
+      //
+      parameter SI.Mass m = 8.34;
+      // 4.34
+      parameter SI.MomentOfInertia J[3,3] = diagonal({0.082,0.0845,0.1377}) "Inertia matrix with respect of body-fixed frame";
+      parameter SI.Acceleration g = Modelica.Constants.g_n;
+      //  input Avionics.Interfaces.se3QuadrotorParamsConnector P "quadrotor Parameter" annotation(Placement(visible = true, transformation(origin = {-11.7431,96.1468}, extent = {{-12,12},{12,-12}}, rotation = -90), iconTransformation(origin = {-11.7431,96.1468}, extent = {{12,-12},{-12,12}}, rotation = 90)));
+      input Avionics.Interfaces.se3TrackConnector TV annotation(Placement(visible = true, transformation(origin = {-0.834862,-97.8803}, extent = {{-12,12},{12,-12}}, rotation = -90), iconTransformation(origin = {-0.834862,-97.8803}, extent = {{12,-12},{-12,12}}, rotation = 90)));
+    protected
+      // Vars
+      Real temp_M[3,1];
+      Real temp_M_cross[3,1];
+      SI.Acceleration a[3,1] "Acceleration";
+      SI.Angle b3_d[3] "";
+      //SI.Angle b1_d[3] "";
+      Real track_coeff[3,1];
+    equation
+      // k.m = 0;
+      //  k.m = P.m;
+      // Error
+      e = Avionics.Functions.se3Error(TV, W);
+      a = der(TV.v);
+      //
+      // Tracking Controller
+      track_coeff = -k.x * e.x - k.v * e.v - m * g * e3 + m * a;
+      b3_d = -vector(track_coeff) / Modelica.Math.Vectors.norm(vector(track_coeff));
+      // Linear
+      //  vector(W.x) = Pose_d.x;
+      //vector(W.x) = x_d.x;
+      vector(W.x) = x_d;
+      W.v = der(W.x);
+      //
+      // Angular
+      //		b1_d =
+      // b1_d = Pose_d.n;
+      // R_d : Attitude Tracking
+      //W.R = Avionics.Functions.se3R_d(b1_d.n, b3_d);
+      W.R = Avionics.Functions.se3R_d(b1_d, b3_d);
+      // W.Omega
+      W.Omega = Avionics.Functions.vex(Modelica.Math.Matrices.inv(der(W.R)) * W.R);
+      // Control output
+      // f :
+      Laws.f = scalar(-transpose(track_coeff) * TV.R * e3);
+      // M :
+      vector(temp_M_cross) = cross(vector(TV.Omega), vector(J * TV.Omega));
+      //Laws.M
+      temp_M = -k.R * e.R - k.Omega * e.Omega + temp_M_cross - J * (skew(vector(TV.Omega)) * transpose(TV.R) * W.R * W.Omega - transpose(TV.R) * W.R * der(W.Omega));
+      Laws.M = vector(temp_M);
+    end se3Controller;
   end Controller;
   package Sources "Interface definitions for the Hydraulics library"
     extends Modelica.Icons.InterfacesPackage;
