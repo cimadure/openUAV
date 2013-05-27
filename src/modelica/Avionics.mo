@@ -389,16 +389,6 @@ package Avionics "Library of Avionics models"
         se3parameters k "Controller parameters";
       end TrackingController;
       //
-      model se3TrajectoryTracking
-        import SI = Modelica.SIunits;
-        output SI.Angle b3_d[3,1];
-        SI.Angle temp[3,1];
-        TrackingError e "Error Variable";
-        se3parameters k "Controller parameters";
-      equation
-        temp = -k.x * e.x - k.v * e.v - m * g * e3 + m * a;
-        b3_d = temp / Modelica.Math.Vectors.norm(temp);
-      end se3TrajectoryTracking;
       //
       block TrackingError
         //  loadFile(Avionics);
@@ -458,6 +448,36 @@ end
         //laws.f = (-k.x .* e_lin.x - k.v .* e_lin.v - B.m * B.g * e3 + B.m * B.a) * B.R * e3;
         // SE3Dynamics_v1
       end se3Command;
+      model se3TrajectoryTracking
+        import SI = Modelica.SIunits;
+        se3parameters k "Controller parameters";
+        parameter SI.Mass m = 8.34;
+        parameter SI.Acceleration g = Modelica.Constants.g_n;
+        annotation(Icon(), Diagram());
+        input Modelica.Blocks.Interfaces.RealInput x_d[3] "Position" annotation(Placement(visible = true, transformation(origin = {-96.9179,14.8435}, extent = {{-12,-12},{12,12}}, rotation = 0), iconTransformation(origin = {-96.9179,14.8435}, extent = {{-12,-12},{12,12}}, rotation = 0)));
+        output SI.Angle b3_d[3] "";
+        output SI.Force f;
+        input Avionics.Interfaces.se3TrackConnector TV annotation(Placement(visible = true, transformation(origin = {-0.834862,-97.8803}, extent = {{-12,12},{12,-12}}, rotation = -90), iconTransformation(origin = {-0.834862,-97.8803}, extent = {{12,-12},{-12,12}}, rotation = 90)));
+      protected
+        // Vars
+        Avionics.Types.se3TrackingVariableLinear e "Error Variable";
+        Real track_coeff[3,1];
+        SI.Velocity v_d[3,1] "desired Velocity";
+        SI.Acceleration a[3,1] "Acceleration";
+        constant Real e3[3,1] = [0.0;0.0;1.0];
+      equation
+        vector(v_d) = der(x_d);
+        a = der(TV.v);
+        vector(e.x) = vector(TV.x) - x_d;
+        //e.x = TV.x - transpose(x_d);
+        e.v = TV.v - v_d;
+        // Tracking Controller
+        track_coeff = -k.x * e.x - k.v * e.v - m * g * e3 + m * a;
+        b3_d = -vector(track_coeff) / Modelica.Math.Vectors.norm(vector(track_coeff));
+        // Control output
+        // f :
+        f = scalar(-transpose(track_coeff) * TV.R * e3);
+      end se3TrajectoryTracking;
     end SE3;
     model se3QuadrotorParameters
       //  parameter Avionics.Types.se3QuadrotorParameters;
@@ -529,33 +549,32 @@ end
       parameter SI.Acceleration g = Modelica.Constants.g_n;
       input Avionics.Interfaces.se3TrackConnector TV annotation(Placement(visible = true, transformation(origin = {-0.834862,-97.8803}, extent = {{-12,12},{12,-12}}, rotation = -90), iconTransformation(origin = {-0.834862,-97.8803}, extent = {{12,-12},{-12,12}}, rotation = 90)));
     protected
-      SI.Acceleration a[3,1] "Acceleration";
       // Vars
       Real temp_M[3,1];
       Real temp_M_cross[3,1];
-      SI.Angle b3_d[3] "";
       //SI.Angle b1_d[3] "";
-      Real track_coeff[3,1];
-      // params
-      //  parameter se3parameters k = Avionics.Controller.se3parameters;
-      ctrlParameters k;
       // Constantes
       Avionics.Types.se3Error e "Error Variable";
       // 12
       Avionics.Types.se3TrackingVariable W;
       // 18
-      constant Real e3[3,1] = [0.0;0.0;1.0];
       //
+      Real track_coeff[3,1];
+      SI.Angle b3_d[3] "";
+      SI.Acceleration a[3,1] "Acceleration";
+      constant Real e3[3,1] = [0.0;0.0;1.0];
+      // params
+      ctrlParameters k;
     equation
+      a = der(TV.v);
+      // Tracking Controller
+      track_coeff = -k.x * e.x - k.v * e.v - m * g * e3 + m * a;
+      b3_d = -vector(track_coeff) / Modelica.Math.Vectors.norm(vector(track_coeff));
       // k.m = 0;
       //  k.m = P.m;
       // Error
       e = Avionics.Functions.se3Error(TV, W);
-      a = der(TV.v);
       //
-      // Tracking Controller
-      track_coeff = -k.x * e.x - k.v * e.v - m * g * e3 + m * a;
-      b3_d = -vector(track_coeff) / Modelica.Math.Vectors.norm(vector(track_coeff));
       // Linear
       //  vector(W.x) = Pose_d.x;
       //vector(W.x) = x_d.x;
@@ -563,8 +582,6 @@ end
       W.v = der(W.x);
       //
       // Angular
-      //		b1_d =
-      // b1_d = Pose_d.n;
       // R_d : Attitude Tracking
       //W.R = Avionics.Functions.se3R_d(b1_d.n, b3_d);
       W.R = Avionics.Functions.se3R_d(b1_d, b3_d);
@@ -669,14 +686,6 @@ equation
       SI.Position x[3] "Position";
       SI.Angle n[3] "Angle";
     end Pose;
-    record se3TrackingVariable
-      import SI = Modelica.SIunits;
-      SI.Position x[3,1] "Position";
-      SI.Velocity v[3,1] "Velocity";
-      // replaceable
-      SI.Angle R[3,3] "Angular Matrix";
-      SI.AngularVelocity Omega[3,1] "Angular Velocity";
-    end se3TrackingVariable;
     record se3Error
       import SI = Modelica.SIunits;
       //equation
@@ -700,6 +709,20 @@ equation
       SI.Force f;
       SI.MomentOfForce M[3];
     end se3CommandLaws;
+    record se3TrackingVariableAngular
+      import SI = Modelica.SIunits;
+      SI.Angle R[3,3] "Angular Matrix";
+      SI.AngularVelocity Omega[3,1] "Angular Velocity";
+    end se3TrackingVariableAngular;
+    record se3TrackingVariable
+      extends se3TrackingVariableLinear;
+      extends se3TrackingVariableAngular;
+    end se3TrackingVariable;
+    record se3TrackingVariableLinear
+      import SI = Modelica.SIunits;
+      SI.Position x[3,1] "Position";
+      SI.Velocity v[3,1] "Velocity";
+    end se3TrackingVariableLinear;
   end Types;
   package Interfaces "Interface definitions for the Hydraulics library"
     extends Modelica.Icons.InterfacesPackage;
