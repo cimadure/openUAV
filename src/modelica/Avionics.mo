@@ -573,13 +573,15 @@ end
       Avionics.Controller.SE3.se3TrajectoryTracking se3trajectorytracking1 annotation(Placement(visible = true, transformation(origin = {-57.1027,43.3193}, extent = {{-12,-12},{12,12}}, rotation = 0)));
       Avionics.Controller.SE3.se3AttitudeTracking se3attitudetracking1 annotation(Placement(visible = true, transformation(origin = {-12.9395,31.7862}, extent = {{-12,-12},{12,12}}, rotation = 0)));
     equation
-      connect(x_d,se3trajectorytracking1.x_d);
-      connect(b1_d,se3attitudetracking1.b1_d);
+      //  connect(x_d,se3trajectorytracking1.x_d);
+      //  connect(b1_d,se3attitudetracking1.b1_d);
+      se3trajectorytracking1.x_d = x_d;
+      se3attitudetracking1.b1_d = b1_d;
       connect(se3trajectorytracking1.b3_d,se3attitudetracking1.b3_d);
-      connect(se3trajectorytracking1.f,Laws.f);
-      connect(se3attitudetracking1.M,Laws.M);
       connect(TV,se3trajectorytracking1.TV);
       connect(TV,se3attitudetracking1.TV);
+      Laws.f = se3trajectorytracking1.f;
+      Laws.M = se3attitudetracking1.M;
     end se3Controller;
   end Controller;
   package Sources "Interface definitions for the Hydraulics library"
