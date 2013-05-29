@@ -316,27 +316,6 @@ package Avionics "Library of Avionics models"
     equation
       connect(commandlaws1.Laws,se3dynamics_v11.Laws);
     end dynamics_v1;
-    model se3controller
-      extends Modelica.Icons.Example;
-      annotation(experiment(StartTime = 0.0, StopTime = 10.0, Tolerance = 0.000001));
-      Avionics.Sources.TrajectoryPosition1 trajectoryposition11 annotation(Placement(visible = true, transformation(origin = {-63.8532,38.8991}, extent = {{-12,-12},{12,12}}, rotation = 0)));
-      Avionics.Sources.TrajectoryHeading1 trajectoryheading11 annotation(Placement(visible = true, transformation(origin = {-62.7523,1.10092}, extent = {{-12,-12},{12,12}}, rotation = 0)));
-      Avionics.Controller.se3Controller se3controller1 annotation(Placement(visible = true, transformation(origin = {-10.7081,21.0708}, extent = {{-12,-12},{12,12}}, rotation = 0)));
-      Avionics.Types.se3TrackingVariable T annotation(Placement(visible = true, transformation(origin = {-9.84529,-11.5331}, extent = {{-12,-12},{12,12}}, rotation = 0)));
-    equation
-      /*  connect(trajectoryposition11.signal,se3controller1.x_d);
-  connect(trajectoryheading11.signal,se3controller1.b1_d);
-  connect(se3controller1.Laws,se3dynamics_v11.Laws);
-  connect(se3dynamics_v11.TV,se3controller1.TV);
-*/
-      connect(trajectoryposition11.signal,se3controller1.x_d);
-      connect(trajectoryheading11.signal,se3controller1.b1_d);
-      T.x = [0;0;0];
-      T.v = [0;0;0];
-      T.R = diagonal({1,1,1});
-      T.Omega = [0;0;0];
-      connect(T,se3controller1.TV);
-    end se3controller;
     model se3controller2
       extends Modelica.Icons.Example;
       annotation(experiment(StartTime = 0.0, StopTime = 10.0, Tolerance = 0.000001));
@@ -350,6 +329,63 @@ package Avionics "Library of Avionics models"
       connect(se3controller1.Laws,se3dynamics_v11.Laws);
       connect(se3dynamics_v11.TV,se3controller1.TV);
     end se3controller2;
+    model se3controller
+      extends Modelica.Icons.Example;
+      annotation(experiment(StartTime = 0.0, StopTime = 10.0, Tolerance = 0.000001));
+      Avionics.Sources.TrajectoryPosition1 trajectoryposition11 annotation(Placement(visible = true, transformation(origin = {-63.8532,38.8991}, extent = {{-12,-12},{12,12}}, rotation = 0)));
+      Avionics.Sources.TrajectoryHeading1 trajectoryheading11 annotation(Placement(visible = true, transformation(origin = {-62.7523,1.10092}, extent = {{-12,-12},{12,12}}, rotation = 0)));
+      Avionics.Controller.se3Controller se3controller1 annotation(Placement(visible = true, transformation(origin = {-10.7081,21.0708}, extent = {{-12,-12},{12,12}}, rotation = 0)));
+      Avionics.Types.se3TrackingVariable T annotation(Placement(visible = true, transformation(origin = {-9.84529,-11.5331}, extent = {{-12,-12},{12,12}}, rotation = 0)));
+    equation
+      //  connect(trajectoryposition11.signal,se3controller1.x_d);
+      //  connect(trajectoryheading11.signal,se3controller1.b1_d);
+      //   connect(T,se3controller1.TV);
+      se3controller1.x_d = trajectoryposition11.signal;
+      se3controller1.b1_d = trajectoryheading11.signal;
+      T.x = [0;0;0];
+      T.v = [0;0;0];
+      T.R = diagonal({1,1,1});
+      T.Omega = [0;0;0];
+      se3controller1.TV = T;
+    end se3controller;
+    model trajectoryTracking
+      Avionics.Controller.SE3.se3TrajectoryTracking se3trajectorytracking1 annotation(Placement(visible = true, transformation(origin = {-23.1434,28.3247}, extent = {{-12,-12},{12,12}}, rotation = 0)));
+      Avionics.Sources.TrajectoryPosition1 trajectoryposition11 annotation(Placement(visible = true, transformation(origin = {-73.2297,30.3972}, extent = {{-12,-12},{12,12}}, rotation = 0)));
+      Avionics.Interfaces.se3TrackConnector T annotation(Placement(visible = true, transformation(origin = {-0.834862,-97.8803}, extent = {{-12,12},{12,-12}}, rotation = -90), iconTransformation(origin = {-0.834862,-97.8803}, extent = {{12,-12},{-12,12}}, rotation = 90)));
+      annotation(experiment(StartTime = 0.0, StopTime = 10.0, Tolerance = 0.000001));
+    equation
+      se3trajectorytracking1.x_d = trajectoryposition11.signal;
+      T.x = [0;0;0];
+      T.v = [0;0;0];
+      T.R = diagonal({1,1,1});
+      T.Omega = [0;0;0];
+      se3trajectorytracking1.TV = T;
+    end trajectoryTracking;
+    model transposeMatrix
+      Real R[3,3];
+      output Real out[3,3];
+      annotation(experiment(StartTime = 0.0, StopTime = 10.0, Tolerance = 0.000001));
+    equation
+      R = [[1,2,3];[4,5,6];[7,8,9]];
+      out = transpose(R);
+    end transposeMatrix;
+    model attitudeTracking
+      annotation(experiment(StartTime = 0.0, StopTime = 10.0, Tolerance = 0.000001));
+      import SI = Modelica.SIunits;
+      Avionics.Controller.SE3.se3AttitudeTracking se3attitudetracking1 annotation(Placement(visible = true, transformation(origin = {-19.9719,-26.4416}, extent = {{-12,-12},{12,12}}, rotation = 0)));
+      Avionics.Sources.TrajectoryHeading1 trajectoryheading11 annotation(Placement(visible = true, transformation(origin = {-65.2602,-24.7539}, extent = {{-12,-12},{12,12}}, rotation = 0)));
+      SI.Angle b3_d[3];
+      Avionics.Interfaces.se3TrackConnector T annotation(Placement(visible = true, transformation(origin = {-0.834862,-97.8803}, extent = {{-12,12},{12,-12}}, rotation = -90), iconTransformation(origin = {-0.834862,-97.8803}, extent = {{12,-12},{-12,12}}, rotation = 90)));
+    equation
+      se3attitudetracking1.b1_d = trajectoryheading11.signal;
+      b3_d = {0,0,0};
+      T.x = [0;0;0];
+      T.v = [0;0;0];
+      T.R = diagonal({1,1,1});
+      T.Omega = [0;0;0];
+      se3attitudetracking1.TV = T;
+      connect(b3_d,se3attitudetracking1.b3_d);
+    end attitudeTracking;
   end Test;
   package Controller "Interface definitions for the Hydraulics library"
     extends Modelica.Icons.InterfacesPackage;
@@ -463,6 +499,7 @@ end
         SI.Velocity v_d[3,1] "desired Velocity";
         SI.Acceleration a[3,1] "Acceleration";
         constant Real e3[3,1] = [0.0;0.0;1.0];
+        Real temp[3,1];
       equation
         vector(v_d) = der(x_d);
         a = der(TV.v);
@@ -474,7 +511,10 @@ end
         b3_d = -vector(track_coeff) / Modelica.Math.Vectors.norm(vector(track_coeff));
         // Control output
         // f :
-        f = scalar(-transpose(track_coeff) * TV.R * e3);
+        //  f = scalar(-transpose(track_coeff) * TV.R * e3);
+        tem = TV.R * e3;
+        f = -transpose(track_coeff) * tem;
+        //  b3_d = {1.1,1.2,0.3};
       end se3TrajectoryTracking;
       model se3AttitudeTracking
         import SI = Modelica.SIunits;
@@ -485,25 +525,40 @@ end
         se3parameters k "Controller parameters";
         input Avionics.Interfaces.se3TrackConnector TV annotation(Placement(visible = true, transformation(origin = {-0.834862,-97.8803}, extent = {{-12,12},{12,-12}}, rotation = -90), iconTransformation(origin = {-0.834862,-97.8803}, extent = {{12,-12},{-12,12}}, rotation = 90)));
       protected
-        SI.Angle e_R[3,1];
-        SI.AngularVelocity e_Omega[3,1] "Angular Velocity";
-        Real temp_M[3,1];
-        Real temp_M_cross[3,1];
-        SI.Angle R_d[3,3] "Angular Matrix";
-        SI.AngularVelocity Omega_d[3,1] "Angular Velocity";
+        //Real temp_M[3,1];
+        // Real temp_M_cross[3,1];
+        //SI.Angle e_R[3,1];
+        //SI.AngularVelocity e_Omega[3,1] "Angular Velocity";
+        // Real R_d3[3,3];
+        Real R_d[3,3] "Angular Matrix";
+        //Real der_R_d[3,3];
+        //   SI.Angle
+        //SI.AngularVelocity Omega_d[3,1] "Angular Velocity";
+        //Real der_Omega_d[3,1];
+        Real transp_R_d[3,3];
       equation
         // Angular
         // R_d : Attitude Tracking
         R_d = Avionics.Functions.se3R_d(b1_d, b3_d);
+        //der_R_d = der(R_d);
+        //der(R_d) = der_R_d;
+        // R_d3 = Modelica.Math.Matrices.inv(R_d2);
+        transp_R_d = transpose(R_d);
         // W.Omega
-        Omega_d = Avionics.Functions.vex(Modelica.Math.Matrices.inv(der(R_d)) * R_d);
-        e_R = Avionics.Functions.vex(1 / 2 * (transpose(R_d) * TV.R - transpose(TV.R * R_d)));
-        e_Omega = TV.Omega - transpose(TV.R) * R_d * Omega_d;
+        //Omega_d = Avionics.Functions.vex(Modelica.Math.Matrices.inv(der(R_d)) * R_d);
+        //e_R = Avionics.Functions.vex(1 / 2 * transpose(R_d) * TV.R - transpose(TV.R * R_d));
+        //e_Omega = TV.Omega - transpose(TV.R) * R_d * Omega_d;
         // Control output
         // M :
-        vector(temp_M_cross) = cross(vector(TV.Omega), vector(J * TV.Omega));
-        temp_M = -k.R * e_R - k.Omega * e_Omega + temp_M_cross - J * (skew(vector(TV.Omega)) * transpose(TV.R) * R_d * Omega_d - transpose(TV.R) * R_d * der(Omega_d));
-        M = vector(temp_M);
+        // vector(temp_M_cross) = cross(vector(TV.Omega), vector(J * TV.Omega));
+        // temp_M = -k.R * e_R - k.Omega * e_Omega + temp_M_cross - J * (skew(vector(TV.Omega)) * transpose(TV.R) * R_d * Omega_d - transpose(TV.R) * R_d * der(Omega_d));
+        //der_Omega_d = der(Omega_d);
+        //  temp_M = -k.R * e_R - k.Omega * e_Omega + temp_M_cross;
+        //transp_R = transpose(TV.R);
+        //transp_R = diagonal({1.1,1.2,0.3});
+        //temp_M = -k.R * e_R - k.Omega * e_Omega + temp_M_cross - J * (skew(vector(TV.Omega)) * transp_R * R_d * Omega_d - transp_R * R_d * der_Omega_d);
+        //M = vector(temp_M);
+        M = {1.1,1.2,0.3};
       end se3AttitudeTracking;
     end SE3;
     model se3QuadrotorParameters
@@ -580,8 +635,10 @@ end
       connect(se3trajectorytracking1.b3_d,se3attitudetracking1.b3_d);
       connect(TV,se3trajectorytracking1.TV);
       connect(TV,se3attitudetracking1.TV);
-      Laws.f = se3trajectorytracking1.f;
-      Laws.M = se3attitudetracking1.M;
+      // Laws.f = se3trajectorytracking1.f;
+      // Laws.M = se3attitudetracking1.M;
+      Laws.f = 3.4567;
+      Laws.M = {1.1,1.2,0.3};
     end se3Controller;
   end Controller;
   package Sources "Interface definitions for the Hydraulics library"
