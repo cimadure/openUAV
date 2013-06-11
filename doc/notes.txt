@@ -1,0 +1,27 @@
+
+/opt/sbia/basis-2.1.2/bin/basisproject --name openUAV --description "Open UAV modelization" --author "Ronan Cimadure" --use MATLAB --data
+
+http://wiki.flightgear.org/JSBSim_Mass_and_balance
+http://wiki.flightgear.org/JSBSim_Engines#FGElectric
+http://wiki.flightgear.org/JSBSim_Thrusters#FGRotor
+
+========================================================================
+install ModelicaRes
+	The goal of ModelicaRes is to provide an open-source tool to effectively
+	manage Modelica_ simulations, interpret results, and create publishable
+	figures.
+	git://github.com/kdavies4/ModelicaRes.git
+	
+	 python setup.py install
+	
+	On Linux, use::
+	   sudo python setup.py install
+	
+	Dependences
+	.. _Modelica: http://www.modelica.org
+	.. _Python: http://www.python.org
+	.. _matplotlib: http://www.matplotlib.org
+	.. _NumPy: http://numpy.scipy.org
+	
+========================================================================
+
