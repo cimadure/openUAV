@@ -1,4 +1,4 @@
-package Avionics "Library of Avionics models"
+package Avionics0 "Library of Avionics models"
   // GUE
   extends Modelica.Icons.Package;
   package Icons "Interface definitions for the Hydraulics library"
@@ -244,31 +244,33 @@ package Avionics "Library of Avionics models"
       /*  input Avionics.Interfaces.se3.Flange_a_Laws Laws annotation(Placement(visible = true, transformation(origin = {-99.55,3.77064}, extent = {{-12,-12},{12,12}}, rotation = 0), iconTransformation(origin = {-99.55,3.77064}, extent = {{-12,-12},{12,12}}, rotation = 0)));
 */
       output Avionics.Interfaces.se3.trackVariables TV annotation(Placement(visible = true, transformation(origin = {100.55,1.83487}, extent = {{-12,-12},{12,12}}, rotation = 0), iconTransformation(origin = {100.55,1.83487}, extent = {{-12,-12},{12,12}}, rotation = 0)));
-      Modelica.Mechanics.Translational.Interfaces.Flange_a f_a annotation(Placement(visible = true, transformation(origin = {-95.3405,40.1434}, extent = {{-10,-10},{10,10}}, rotation = 0), iconTransformation(origin = {-95.3405,40.1434}, extent = {{-10,-10},{10,10}}, rotation = 0)));
-      Modelica.Mechanics.Rotational.Interfaces.Flange_b M_a annotation(Placement(visible = true, transformation(origin = {-100.358,-45.1613}, extent = {{-10,-10},{10,10}}, rotation = 0), iconTransformation(origin = {-100.358,-45.1613}, extent = {{-10,-10},{10,10}}, rotation = 0)));
+      Modelica.Mechanics.Translational.Interfaces.Flange_a f_a[3] annotation(Placement(visible = true, transformation(origin = {-95.3405,40.1434}, extent = {{-10,-10},{10,10}}, rotation = 0), iconTransformation(origin = {-95.3405,40.1434}, extent = {{-10,-10},{10,10}}, rotation = 0)));
+      Modelica.Mechanics.Rotational.Interfaces.Flange_b M_a[3] annotation(Placement(visible = true, transformation(origin = {-100.358,-45.1613}, extent = {{-10,-10},{10,10}}, rotation = 0), iconTransformation(origin = {-100.358,-45.1613}, extent = {{-10,-10},{10,10}}, rotation = 0)));
     protected
       // SI.Force f;
-      SI.MomentOfForce M[3,1];
+      //SI.MomentOfForce M[3,1];
       SI.Angle R[3,3] "Start Angular Matrix";
     initial equation
-      R = Avionics.Functions.Rxyz(M_a.phi[1], M_a.phi[2], M_a.phi[3]);
+      R = Avionics.Functions.Rxyz(M_a[1].phi, M_a[2].phi, M_a[3].phi);
       Omega = Omega_start;
-      x = [f_a.s[1];f_a.s[2];f_a.s[3]];
+      x = [f_a[1].s;f_a[2].s;f_a[3].s];
       v = v_start;
     equation
       // flow
-      vector(M) = M_a.tau;
+      //vector(M) = M_a.tau;
+      //M = [M_a[1].tau;M_a[2].tau;M_a[3].tau];
       //
-      zeros(3) = f_a.f + TV.f;
-      zeros(3) = M_a.tau + TV.tau;
-      //  TV.f = Laws.f;
-      //  TV.M = Laws.M;
+      //  zeros(3) = f_a.f + TV.f;
+      //  zeros(3) = M_a.tau + vector(M);
+      // f_a[1] = 0; f
+      //  TV.f = -f_a.f;
+      //  TV.M = -M_a.tau;
       // LINEAR
-      m * a = m * g * e3 - f_a.f[3] * R * e3;
+      m * a = m * g * e3 - f_a[3].f * R * e3;
       a = der(v);
       v = der(x);
       // ANGULAR
-      vector(J * dOmega) + cross(vector(Omega), vector(J * Omega)) = M[:,1];
+      vector(J * dOmega) + cross(vector(Omega), vector(J * Omega)) = M_a.tau;
       dOmega = der(Omega);
       R * skew(Omega[:,1]) = der(R);
       //der(R) = R * skew(Omega); // original
@@ -694,12 +696,14 @@ If k=0, the block reduces to y=0.
     end force;
     model commandDynamics
       Avionics.Sources.TrajectoryPosition1 trajectoryposition11 annotation(Placement(visible = true, transformation(origin = {-70.3432,31.8039}, extent = {{-10,-10},{10,10}}, rotation = 0)));
-      Avionics.Sources.laws laws1 annotation(Placement(visible = true, transformation(origin = {-29.2542,28.5993}, extent = {{-10,-10},{10,10}}, rotation = 0)));
       Avionics.Sources.TrajectoryHeading1 trajectoryheading11 annotation(Placement(visible = true, transformation(origin = {-70.5158,2.61978}, extent = {{-10,-10},{10,10}}, rotation = 0)));
       Avionics.Bodies.quadcopter quadcopter1 annotation(Placement(visible = true, transformation(origin = {11.3524,28.5993}, extent = {{-10,-10},{10,10}}, rotation = 0)));
+      Avionics.Sources.laws laws1 annotation(Placement(visible = true, transformation(origin = {-21.8663,32.2933}, extent = {{-10,-10},{10,10}}, rotation = 0)));
     equation
-      connect(trajectoryheading11.signal,laws1.M_a) annotation(Line(points = {{-59.5158,2.61978},{-40.3883,2.61978},{-40.3883,25.7612},{-40.3883,25.7612}}));
-      connect(trajectoryposition11.signal,laws1.f_a) annotation(Line(points = {{-59.3432,31.8039},{-39.9517,31.8039},{-39.9517,31.2191},{-39.9517,31.2191}}));
+      connect(trajectoryheading11.signal,laws1.M_a) annotation(Line(points = {{-59.5158,2.61978},{-40.3883,2.61978},{-32.1287,25.7612},{-32.1287,29.4653}}));
+      connect(trajectoryposition11.signal,laws1.f_a) annotation(Line(points = {{-59.3432,31.8039},{-39.9517,31.8039},{-32.3328,31.2191},{-32.3328,35.3254}}));
+      connect(laws1.f_b,quadcopter1.f_a);
+      connect(laws1.M_b,quadcopter1.M_a);
       annotation(Icon(coordinateSystem(extent = {{-100,-100},{100,100}}, preserveAspectRatio = true, initialScale = 0.1, grid = {2,2})), Diagram(coordinateSystem(extent = {{-100,-100},{100,100}}, preserveAspectRatio = true, initialScale = 0.1, grid = {2,2})));
     end commandDynamics;
   end Test;
@@ -1289,8 +1293,8 @@ Block has one continuous Real input signal vector.
   SI.Angle phi[3] "Absolute rotation angle of flange";
   flow SI.Torque tau[3] "Cut torque in the flange";
   */
-        // flow SI.Force f[3];
-        // flow SI.MomentOfForce M[3];
+        //  flow SI.Force f[3];
+        //  flow SI.MomentOfForce M[3];
       end trackVariables;
       connector commandLaws
         import SI = Modelica.SIunits;
@@ -1332,5 +1336,5 @@ Block has one continuous Real input signal vector.
       end Flange_a_Laws;
     end se3;
   end Interfaces;
-end Avionics;
+end Avionics0;
 
