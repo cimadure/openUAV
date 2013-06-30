@@ -1,4 +1,4 @@
-within Avionics.Sources.stepForce;
+within Avionics.Sources;
 block TrajectoryPosition1
   import SIunits = Modelica.SIunits;
   extends Avionics.Interfaces.MO(nout = 3);
